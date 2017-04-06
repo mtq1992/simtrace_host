@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <libusb.h>
+#include "libusb.h"
 
 #include "simtrace.h"
 #include "simtrace_usb.h"
@@ -76,7 +76,41 @@ static int gsmtap_send_sim(const uint8_t *apdu, unsigned int len)
 
 static void apdu_out_cb(uint8_t *buf, unsigned int len, void *user_data)
 {//print APDU
-	printf("APDU: %s\n", osmo_hexdump(buf, len));
+    char *str=osmo_hexdump(buf, len);
+    //int len = strlen(str);
+    printf("APDU: %s\n", str);
+    printf("SIZE OF ADPU: %d\n",(int)strlen(str));
+    //printf("%c\n",str[1]);
+    char *randpre="00 88 00 81 22 10 ";
+    if(strstr(str,randpre)!=NULL){
+        char rand[49];
+        char autn[49];
+        printf("RAND AUTN\n");
+        strncpy(rand,str+18,48);
+        strncpy(autn,str+69,48);
+        rand[48]='\0';
+        autn[48]='\0';
+        printf("RAND: %s\n",rand);
+        printf("AUTN: %s\n",autn);
+
+    }
+    char *aespre = "00 c0 00 00 35 db";
+    if(strstr(str,aespre)!=NULL){
+        char res[24];
+        char ck[49];
+        char ik[49];
+        printf("RES CK IK\n");
+        strncpy(res,str+21,24);
+        strncpy(ck,str+48,48);
+        strncpy(ik,str+99,48);
+        res[23]='\0';
+        ck[48]='\0';
+        ik[48]='\0';
+        printf("RES: %s\n",res);
+        printf("CK: %s\n",ck);
+        printf("IK: %s\n",ik);
+
+    }
 	gsmtap_send_sim(buf, len);
 }
 
